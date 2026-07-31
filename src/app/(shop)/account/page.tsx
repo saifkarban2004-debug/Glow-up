@@ -11,6 +11,8 @@ export const metadata = {
   title: 'My Account | Glow Up',
 };
 
+export const dynamic = 'force-dynamic';
+
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'PENDING':
