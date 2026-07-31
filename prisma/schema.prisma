@@ -74,6 +74,7 @@ model Product {
   isFeatured     Boolean     @default(false)
   isArchived     Boolean     @default(false)
   orderItems     OrderItem[]
+  cartItems      CartItem[]
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
@@ -133,10 +134,23 @@ model User {
   role          String    @default("customer")
   accounts      Account[]
   sessions      Session[]
+  cartItems     CartItem[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@map("users")
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@unique([userId, productId])
+  @@map("cart_items")
 }
 
 model Account {
