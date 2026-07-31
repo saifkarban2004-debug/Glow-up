@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await prisma.cartItem.update({
           where: { id: existing.id },
-          data: { quantity: existing.quantity + item.quantity },
+          data: { quantity: Math.max(existing.quantity, item.quantity) },
         });
       } else {
         await prisma.cartItem.create({

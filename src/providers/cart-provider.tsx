@@ -27,6 +27,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (Array.isArray(dbCartItems)) {
             const mappedItems = dbCartItems.map((dbItem: any) => ({
               ...dbItem.product,
+              price: Number(dbItem.product.price),
               quantity: dbItem.quantity
             }));
             useCartStore.getState().setItems(mappedItems);
