@@ -4,12 +4,15 @@ import { signOut } from 'next-auth/react';
 import { LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useCartStore } from '@/store/cart';
 
 export function SignOutButton() {
   const [isLoading, setIsLoading] = useState(false);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   const handleSignOut = async () => {
     setIsLoading(true);
+    clearCart();
     await signOut({ callbackUrl: '/login' });
   };
 

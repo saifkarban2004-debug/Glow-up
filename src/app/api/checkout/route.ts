@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import Stripe from "stripe";
+import { auth } from "@/lib/auth";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-07-29.dahlia",
@@ -8,6 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
     const body = await req.json();
     const { items, formData } = body;
 
@@ -21,6 +23,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const emailToUse = session?.user?.email || formData.email;
 
     let totalAmount = 0;
     const orderItemsData = items.map((item: any) => {
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
         status: "PENDING",
         isPaid: false,
         customerName: formData.firstName + " " + formData.lastName,
-        customerEmail: formData.email,
+        customerEmail: emailToUse,
         phone: formData.phone || "N/A",
         address: formData.address,
         city: formData.city,
