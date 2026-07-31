@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const authSession = await auth();
     const body = await req.json();
     const { items, formData } = body;
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const emailToUse = session?.user?.email || formData.email;
+    const emailToUse = authSession?.user?.email || formData.email;
 
     let totalAmount = 0;
     const orderItemsData = items.map((item: any) => {
