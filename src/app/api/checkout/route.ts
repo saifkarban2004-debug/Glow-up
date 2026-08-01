@@ -21,13 +21,35 @@ export async function POST(req: NextRequest) {
 
     const emailToUse = authSession?.user?.email || formData.email;
 
+    // Validate all products exist in the database
+    const productIds = items.map((item: any) => item.id);
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, price: true },
+    });
+
+    const existingIds = new Set(existingProducts.map((p) => p.id));
+    const missingItems = items.filter((item: any) => !existingIds.has(item.id));
+
+    if (missingItems.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Some items in your cart are no longer available. Please remove them and try again.",
+          missingItems: missingItems.map((item: any) => item.name),
+        },
+        { status: 400 }
+      );
+    }
+
     let totalAmount = 0;
     const orderItemsData = items.map((item: any) => {
-      totalAmount += item.price * item.quantity;
+      const dbProduct = existingProducts.find((p) => p.id === item.id)!;
+      const price = Number(dbProduct.price);
+      totalAmount += price * item.quantity;
       return {
         productId: item.id,
         quantity: item.quantity,
-        price: item.price,
+        price,
       };
     });
 
