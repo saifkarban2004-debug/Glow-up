@@ -4,18 +4,27 @@ import { formatCurrency } from '@/lib/utils';
 import { Eye } from 'lucide-react';
 import OrderStatusDropdown from '@/components/admin/OrderStatusDropdown';
 import PaymentStatusDropdown from '@/components/admin/PaymentStatusDropdown';
+import OrderSearch from '@/components/admin/OrderSearch';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrdersPage() {
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ query?: string }> }) {
+  const { query } = await searchParams;
+  
+  const where = query 
+    ? { id: { contains: query, mode: 'insensitive' as const } } 
+    : {};
+
   const orders = await prisma.order.findMany({
+    where,
     orderBy: { createdAt: 'desc' },
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold text-charcoal">Orders</h1>
+        <OrderSearch />
       </div>
 
       <div className="rounded-md border border-neutral-200 bg-white shadow-sm overflow-hidden">
