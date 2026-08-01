@@ -73,8 +73,8 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
             method: 'POST',
             body: formData,
           });
-          if (!res.ok) throw new Error('Failed to upload image');
           const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to upload image');
           return data.url;
         });
 

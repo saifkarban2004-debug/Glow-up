@@ -11,10 +11,21 @@ cloudinary.config({
 export async function POST(req: NextRequest) {
   try {
     // Check Cloudinary config
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.error("Missing Cloudinary environment variables");
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      console.error("Missing Cloudinary environment variables:", {
+        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: !!process.env.CLOUDINARY_API_KEY,
+        api_secret: !!process.env.CLOUDINARY_API_SECRET,
+      });
       return NextResponse.json(
-        { error: "Image upload service is not configured. Please add Cloudinary environment variables." },
+        {
+          error:
+            "Image upload service is not configured. Please add Cloudinary environment variables.",
+        },
         { status: 500 }
       );
     }
@@ -22,14 +33,21 @@ export async function POST(req: NextRequest) {
     const session = await auth();
 
     if (!session || session.user?.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.error("Upload auth failed. Session:", JSON.stringify(session?.user));
+      return NextResponse.json(
+        { error: "Unauthorized — admin login required" },
+        { status: 401 }
+      );
     }
 
     const formData = await req.formData();
     const file = formData.get("image") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No image provided" },
+        { status: 400 }
+      );
     }
 
     // Check file size (max 5MB)
@@ -40,19 +58,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert to base64 data URI for Cloudinary upload
+    // (more reliable on Vercel serverless than stream-based upload)
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString("base64");
+    const mimeType = file.type || "image/png";
+    const dataUri = `data:${mimeType};base64,${base64}`;
 
-    const uploadResponse = await new Promise<any>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: "glow-up-products" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-
-      uploadStream.end(buffer);
+    const uploadResponse = await cloudinary.uploader.upload(dataUri, {
+      folder: "glow-up-products",
+      resource_type: "image",
     });
 
     return NextResponse.json({ url: uploadResponse.secure_url });
