@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { DollarSign, Package, ShoppingCart } from "lucide-react";
+import OrderStatusDropdown from "@/components/admin/OrderStatusDropdown";
+import PaymentStatusDropdown from "@/components/admin/PaymentStatusDropdown";
+
+export const dynamic = 'force-dynamic';
 
 async function getAdminStats() {
   const [totalOrders, totalProducts, paidOrders] = await Promise.all([
@@ -88,13 +92,14 @@ export default async function AdminDashboardPage() {
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Total</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Payment</th>
+                <th className="px-6 py-4">Fulfillment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {recentOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                     No orders found.
                   </td>
                 </tr>
@@ -114,15 +119,10 @@ export default async function AdminDashboardPage() {
                       {formatter.format(Number(order.total))}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.isPaid
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {order.isPaid ? "Paid" : "Pending"}
-                      </span>
+                      <PaymentStatusDropdown orderId={order.id} isPaid={order.isPaid} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <OrderStatusDropdown orderId={order.id} currentStatus={order.status} />
                     </td>
                   </tr>
                 ))
