@@ -88,7 +88,7 @@ Please confirm my order. Thank you!`;
   } catch (error: any) {
     console.error("Checkout error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error?.message || "Internal Server Error" },
       { status: 500 }
     );
   }
