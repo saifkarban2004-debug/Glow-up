@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/providers";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
             borderRadius: '8px',
           },
         }} />
+        <Analytics />
       </body>
     </html>
   );
