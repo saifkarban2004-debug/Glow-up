@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import Stripe from "stripe";
 import { auth } from "@/lib/auth";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-07-29.dahlia",
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +36,7 @@ export async function POST(req: NextRequest) {
         total: totalAmount,
         status: "PENDING",
         isPaid: false,
+        paymentMethod: "COD",
         customerName: formData.firstName + " " + formData.lastName,
         customerEmail: emailToUse,
         phone: formData.phone || "N/A",
@@ -48,37 +44,47 @@ export async function POST(req: NextRequest) {
         city: formData.city,
         state: formData.state || "N/A",
         zipCode: formData.zipCode,
-        country: formData.country || "US",
+        country: formData.country || "EG",
         items: {
           create: orderItemsData,
         },
       },
-    });
-
-    const line_items = items.map((item: any) => ({
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: item.name,
-          images: item.image ? [item.image] : [],
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
         },
-        unit_amount: Math.round(item.price * 100),
-      },
-      quantity: item.quantity,
-    }));
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items,
-      mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-      metadata: {
-        orderId: order.id,
       },
     });
 
-    return NextResponse.json({ url: session.url });
+    // Build WhatsApp message
+    const itemLines = order.items
+      .map(
+        (item) =>
+          `- ${item.quantity}x ${item.product.name} ($${Number(item.price).toFixed(2)})`
+      )
+      .join("\n");
+
+    const message = `Hello, I would like to place an order! 🛍️
+
+Order ID: #${order.id.slice(-8).toUpperCase()}
+
+Items:
+${itemLines}
+
+Total: $${Number(order.total).toFixed(2)}
+
+Shipping to: ${order.address}, ${order.city}, ${order.country}
+
+Please confirm my order. Thank you!`;
+
+    const whatsappUrl = `https://wa.me/201554397756?text=${encodeURIComponent(message)}`;
+
+    return NextResponse.json({
+      orderId: order.id,
+      whatsappUrl,
+    });
   } catch (error: any) {
     console.error("Checkout error:", error);
     return NextResponse.json(
