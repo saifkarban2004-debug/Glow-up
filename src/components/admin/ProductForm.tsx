@@ -66,16 +66,30 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
       let uploadedImageUrls: string[] = [];
 
       if (imageFiles.length > 0) {
+        // 1. Get a signed upload token from our backend
+        const sigRes = await fetch('/api/upload');
+        const sigData = await sigRes.json();
+        if (!sigRes.ok) throw new Error(sigData.error || 'Failed to get upload signature');
+
+        const { signature, timestamp, cloudName, apiKey, folder } = sigData;
+
+        // 2. Upload each image directly to Cloudinary from the browser
         const uploadPromises = imageFiles.map(async (file) => {
-          const formData = new FormData();
-          formData.append('image', file);
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-          });
+          const cloudinaryForm = new FormData();
+          cloudinaryForm.append('file', file);
+          cloudinaryForm.append('signature', signature);
+          cloudinaryForm.append('timestamp', timestamp.toString());
+          cloudinaryForm.append('api_key', apiKey);
+          cloudinaryForm.append('folder', folder);
+
+          const res = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            { method: 'POST', body: cloudinaryForm }
+          );
+
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Failed to upload image');
-          return data.url;
+          if (!res.ok) throw new Error(data.error?.message || 'Cloudinary upload failed');
+          return data.secure_url as string;
         });
 
         uploadedImageUrls = await Promise.all(uploadPromises);
