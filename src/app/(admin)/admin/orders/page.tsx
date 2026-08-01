@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { formatCurrency } from '@/lib/utils';
 import { Eye } from 'lucide-react';
 import OrderStatusDropdown from '@/components/admin/OrderStatusDropdown';
+import PaymentStatusDropdown from '@/components/admin/PaymentStatusDropdown';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,6 @@ export default async function OrdersPage() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: 'desc' },
   });
-
-
 
   return (
     <div className="space-y-6">
@@ -28,8 +27,8 @@ export default async function OrdersPage() {
                 <th scope="col" className="px-6 py-4 font-medium">Customer</th>
                 <th scope="col" className="px-6 py-4 font-medium">Date</th>
                 <th scope="col" className="px-6 py-4 font-medium">Total</th>
-                <th scope="col" className="px-6 py-4 font-medium">Payment Status</th>
-                <th scope="col" className="px-6 py-4 font-medium">Fulfillment Status</th>
+                <th scope="col" className="px-6 py-4 font-medium">Payment</th>
+                <th scope="col" className="px-6 py-4 font-medium">Fulfillment</th>
                 <th scope="col" className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -43,8 +42,8 @@ export default async function OrdersPage() {
               ) : (
                 orders.map((order) => (
                   <tr key={order.id} className="hover:bg-neutral-50/50">
-                    <td className="px-6 py-4 font-medium text-charcoal">
-                      #{order.id.substring(0, 8).toUpperCase()}
+                    <td className="px-6 py-4 font-mono text-xs font-medium text-charcoal">
+                      #{order.id.slice(-8).toUpperCase()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -57,11 +56,7 @@ export default async function OrdersPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 font-medium">{formatCurrency(Number(order.total))}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        order.isPaid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                      }`}>
-                        {order.isPaid ? 'Paid' : 'Unpaid'}
-                      </span>
+                      <PaymentStatusDropdown orderId={order.id} isPaid={order.isPaid} />
                     </td>
                     <td className="px-6 py-4">
                       <OrderStatusDropdown orderId={order.id} currentStatus={order.status} />

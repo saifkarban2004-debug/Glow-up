@@ -23,7 +23,7 @@ export default function OrderStatusDropdown({
     const updatePromise = fetch('/api/orders', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, status: newStatus }),
+      body: JSON.stringify({ id: orderId, status: newStatus }),
     }).then(async (res) => {
       if (!res.ok) throw new Error('Failed to update status');
       router.refresh();
